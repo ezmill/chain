@@ -19,7 +19,7 @@ function initScene(){
     cameraRTT = new THREE.OrthographicCamera( w / - 2, w / 2, h / 2, h / - 2, -10000, 10000 );
 	cameraRTT.position.z = 100;
 	controls = new THREE.OrbitControls(camera);
-
+	controls.maxPolarAngle = Math.PI/2; 
 	renderer = new THREE.WebGLRenderer();
     renderer.setSize(w, h);
     renderer.setClearColor(0xffffff, 1);
