@@ -16,6 +16,7 @@ function initScene(){
 
     camera = new THREE.PerspectiveCamera(50, w / h, 1, 100000);
     camera.position.set(0,0, 750);//test
+    camera.rotation.y = Math.PI/4
     cameraRTT = new THREE.OrthographicCamera( w / - 2, w / 2, h / 2, h / - 2, -10000, 10000 );
 	cameraRTT.position.z = 100;
 	controls = new THREE.OrbitControls(camera);
@@ -34,6 +35,12 @@ function initScene(){
 	renderer.shadowMapDarkness = 1.0;
 	renderer.shadowMapWidth = 100000;
 	renderer.shadowMapHeight = 100000;
+
+	rtScene = new THREE.WebGLRenderTarget(w, h);
+	rtScene.minFilter = THREE.LinearFilter;
+    rtScene.magFilter = THREE.NearestFilter;
+    rtScene.format = THREE.RGBFormat;
+    rtScene.flipY = true;
 
     container.appendChild(renderer.domElement);
 
@@ -62,7 +69,6 @@ function initScene(){
 
 	var refractionCube = new THREE.CubeTexture( reflectionCube.image, THREE.CubeRefractionMapping );
 	refractionCube.format = THREE.RGBFormat;
-	var mirrorMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff, ambient: 0xaaaaaa, envMap: reflectionCube } )
 
 	// control = new THREE.TransformControls( camera, renderer.domElement );
 	// control.attach( FBObject2.mesh );
@@ -74,7 +80,7 @@ function initScene(){
 	    	x: 0,
 	    	y: 0,
 	    	z: 0,
-	    	// texture: "textures/seed.png",
+	    	texture: "textures/gold.jpg",
 	    	vertexShader: "vs",
 	    	fragmentShader1: "fs",
 	    	fragmentShader2: "flow",
@@ -82,7 +88,9 @@ function initScene(){
 		});
 	chain.uniforms = globalUniforms;
 	chain.init(w,h);
-	chain.loadModel("js/models/chain.js", 0, 0, 0, 0.075, 0, 0, 0, mirrorMaterial);
+	var mirrorMaterial = new THREE.MeshLambertMaterial( { side: THREE.DoubleSide, color: 0xffffff, ambient: 0xaaaaaa, envMap: reflectionCube } )
+
+	chain.loadModel("js/models/hp-chain.js", 0, 0, 0, 0.075, 0, 0, 0, mirrorMaterial);
 
 	mouse = new FBObject({
 			w: w,
@@ -120,12 +128,89 @@ function initScene(){
 
 	keyboard.loadModel("js/models/keyboard.js", 0, 0, 0, 0.075, 0, 0, 0, keyboardMaterial);
 
+	display_inner = new FBObject({
+			w: w,
+	    	h: h, 
+	    	x: 0,
+	    	y: 0,
+	    	z: 0,
+	    	texture: "textures/phone-bg.jpg",
+	    	vertexShader: "vs",
+	    	fragmentShader1: "fs",
+	    	fragmentShader2: "fs",
+	    	mainScene: mainScene
+		});
+	display_inner.uniforms = globalUniforms;
+	display_inner.init(w,h);
+	display_innerTex = new THREE.ImageUtils.loadTexture("textures/phone-bg.jpg");
+	display_innerTex.flipY = true;
+	display_innerTex.flipX = true;
+	display_innerMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff, ambient: 0xaaaaaa} )
+
+	screenGeometry = new THREE.PlaneBufferGeometry(67.45, 120.46);
+	screenMaterial = new THREE.MeshBasicMaterial({color:0xffffff, side: THREE.DoubleSide, map:display_innerTex});
+	screenMesh = new THREE.Mesh(screenGeometry, screenMaterial);
+	screenMesh.rotation.set(3*Math.PI/2,0,-Math.PI/6);
+	screenMesh.position.set(0,3.55,299.5);
+	mainScene.add(screenMesh);
+
+
+
+	// display_inner.loadModel("js/models/display-inner.js", 0, 0, 300, 10.0, 0, 0, 0,display_innerMaterial);
+
+	display_outer = new FBObject({
+			w: w,
+	    	h: h, 
+	    	x: 0,
+	    	y: 0,
+	    	z: 0,
+	    	texture: "textures/display_inner.png",
+	    	vertexShader: "vs",
+	    	fragmentShader1: "fs",
+	    	fragmentShader2: "fs",
+	    	mainScene: mainScene
+		});
+	display_outer.uniforms = globalUniforms;
+	display_outer.init(w,h);
+	// display_innerTex = new THREE.ImageUtils.loadTexture("textures/keyboard-&-magic-mouse-by-apple-keys.jpg");
+	// display_innerMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff, ambient: 0xaaaaaa, map: keyboardTex } )
+
+	display_outer.loadModel("js/models/display-outer.js", 0, 0, 300, 10.0, 0, -Math.PI/6, 0, mirrorMaterial);
+
+	body = new FBObject({
+			w: w,
+	    	h: h, 
+	    	x: 0,
+	    	y: 0,
+	    	z: 0,
+	    	texture: "textures/display_inner.png",
+	    	vertexShader: "vs",
+	    	fragmentShader1: "fs",
+	    	fragmentShader2: "fs",
+	    	mainScene: mainScene
+		});
+	body.uniforms = globalUniforms;
+	body.init(w,h);
+	var bodyMaterial = new THREE.MeshPhongMaterial({
+	color: 0x595959,
+    ambient: 0xff0000,
+    specular: 0xffffff,
+    shininess: 5});
+
+	// display_innerTex = new THREE.ImageUtils.loadTexture("textures/keyboard-&-magic-mouse-by-apple-keys.jpg");
+	// display_innerMaterial = new THREE.MeshLambertMaterial( { color: 0xffffff, ambient: 0xaaaaaa, map: keyboardTex } )
+
+	body.loadModel("js/models/body.js", 0, 0, 300, 10.0, 0, -Math.PI/6, 0, bodyMaterial);
+
+
     document.addEventListener('mousemove', onDocumentMouseMove, false);
     document.addEventListener('mousedown', onDocumentMouseDown, false);
     window.addEventListener('resize', onWindowResize, false);
 
 	var geometry = new THREE.PlaneBufferGeometry(100000,100000);
 	var material = new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.DoubleSide});
+
+
 	var mesh = new THREE.Mesh(geometry, material);
 	mesh.receiveShadow = true;
 	mesh.position.set(0,-7,0);
@@ -155,8 +240,8 @@ spotLight.castShadow = true;
 light.castShadow = true;
 
 // light.shadowCameraVisible = true
-light.shadowMapWidth = 1024;
-light.shadowMapHeight = 1024;
+light.shadowMapWidth = 10000;
+light.shadowMapHeight = 10000;
 light.shadowCascadeWidth = 10000;
 light.shadowCascadeHeight = 10000;
 
@@ -199,6 +284,9 @@ function onDocumentMouseDown(event){
 	chain.getFrame(cameraRTT);
 	mouse.getFrame(cameraRTT);
 	keyboard.getFrame(cameraRTT);
+	display_inner.getFrame(cameraRTT);
+	display_outer.getFrame(cameraRTT);
+	body.getFrame(cameraRTT);
 }
 var inc = 0;
 var addFrames = true;
@@ -206,21 +294,27 @@ var translate = false;
 function render(){
 
 	// FBObject1.material1.uniforms.texture.value.needsUpdate = true;
+	// FBObject1.material1.uniforms.texture.value.needsUpdate = true;
 	keyboard.modelMesh.castShadow = keyboard.modelMesh.receiveShadow = true;
 	mouse.modelMesh.castShadow = mouse.modelMesh.receiveShadow = true;
 	chain.modelMesh.castShadow = chain.modelMesh.receiveShadow = true;
+	// display_inner.modelMesh.castShadow = display_inner.modelMesh.receiveShadow = true;
+	// display_outer.modelMesh.castShadow = display_outer.modelMesh.receiveShadow = true;
+	body.modelMesh.castShadow = body.modelMesh.receiveShadow = true;
 	spotLight.target = mouse.modelMesh;
 
 	controls.update();
 
 	time +=0.05;
-    camera.lookAt(mainScene.position);
 
 	globalUniforms.time.value = time;
 
     chain.passTex();
     mouse.passTex();
     keyboard.passTex();
+    display_inner.passTex();
+    display_outer.passTex();
+    body.passTex();
 
 
 
@@ -243,11 +337,20 @@ function render(){
 	chain.render(cameraRTT);
 	mouse.render(cameraRTT);
 	keyboard.render(cameraRTT);
+	display_inner.render(cameraRTT);
+	display_outer.render(cameraRTT);
+	body.render(cameraRTT);
 	renderer.render(mainScene, camera);
 
 	chain.cycle();
 	mouse.cycle();
 	keyboard.cycle();
+	display_inner.cycle();
+	display_outer.cycle();
+	body.cycle();
+
+	// renderer.render(mainScene, camera, rtScene, true);
+	// screenMaterial.map = rtScene;
 
 
 }
